@@ -10,6 +10,9 @@
 
 module rt.sections_elf_shared;
 
+version (RISCV32) version = RISCV_Any;
+version (RISCV64) version = RISCV_Any;
+
 version (CRuntime_Glibc) enum SharedELF = true;
 else version (FreeBSD) enum SharedELF = true;
 else version (NetBSD) enum SharedELF = true;
@@ -671,7 +674,16 @@ version (Shared)
             if (dyn.d_tag == DT_STRTAB)
             {
                 version (linux)
-                    strtab = cast(const(char)*)dyn.d_un.d_ptr;
+                {
+                    // This might change in future glibc releases (after 2.29) as dynamic sections
+                    // are not required to be read-only on RISC-V. This was copy & pasted from MIPS while
+                    // upstreaming RISC-V support. Otherwise MIPS is the only arch which sets in glibc:
+                    // #define DL_RO_DYN_SECTION 1
+                    version (RISCV_Any)
+                        strtab = cast(const(char)*)(info.dlpi_addr + dyn.d_un.d_ptr); // relocate
+                    else
+                        strtab = cast(const(char)*)dyn.d_un.d_ptr;
+                }
                 else version (FreeBSD)
                     strtab = cast(const(char)*)(info.dlpi_addr + dyn.d_un.d_ptr); // relocate
                 else version (NetBSD)

@@ -1353,7 +1353,7 @@ else version (GNU)
 
     private bool casImpl(T,V1,V2)( shared(T)* here, V1 ifThis, V2 writeThis ) pure nothrow @nogc @trusted
     {
-        static assert(GNU_Have_Atomics, "cas() not supported on this architecture");
+        static assert(GNU_Have_Atomics || GNU_Have_LibAtomic, "cas() not supported on this architecture");
         bool res = void;
 
         static if (T.sizeof == byte.sizeof)
@@ -1406,7 +1406,7 @@ else version (GNU)
     {
         static assert(ms != MemoryOrder.rel, "Invalid MemoryOrder for atomicLoad");
         static assert(__traits(isPOD, T), "argument to atomicLoad() must be POD");
-        static assert(GNU_Have_Atomics, "atomicLoad() not supported on this architecture");
+        static assert(GNU_Have_Atomics || GNU_Have_LibAtomic, "atomicLoad() not supported on this architecture");
 
         static if (T.sizeof == ubyte.sizeof)
         {
@@ -1444,7 +1444,7 @@ else version (GNU)
     {
         static assert(ms != MemoryOrder.acq, "Invalid MemoryOrder for atomicStore");
         static assert(__traits(isPOD, T), "argument to atomicLoad() must be POD");
-        static assert(GNU_Have_Atomics, "atomicStore() not supported on this architecture");
+        static assert(GNU_Have_Atomics || GNU_Have_LibAtomic, "atomicStore() not supported on this architecture");
 
         static if (T.sizeof == ubyte.sizeof)
         {

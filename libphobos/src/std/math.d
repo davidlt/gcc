@@ -162,6 +162,8 @@ version (AArch64)   version = ARM_Any;
 version (ARM)       version = ARM_Any;
 version (SPARC)     version = SPARC_Any;
 version (SPARC64)   version = SPARC_Any;
+version (RISCV32)   version = RISCV_Any;
+version (RISCV64)   version = RISCV_Any;
 
 version (D_InlineAsm_X86)
 {
@@ -4683,6 +4685,7 @@ private:
     // The Pentium SSE2 status register is 32 bits.
     // The ARM and PowerPC FPSCR is a 32-bit register.
     // The SPARC FSR is a 32bit register (64 bits for SPARC 7 & 8, but high bits are uninteresting).
+    // The RISC-V (32 & 64 bit) fcsr is 32-bit register.
     uint flags;
 
     version (CRuntime_Microsoft)
@@ -4753,6 +4756,15 @@ private:
                     }
                     return result;
                 }
+            }
+            else version (RISCV_Any)
+            {
+                uint result = void;
+                asm pure nothrow @nogc
+                {
+                    "frflags %0" : "=r" (result);
+                }
+                return result;
             }
             else
                 assert(0, "Not yet supported");
@@ -4826,6 +4838,14 @@ private:
                     {
                         "vmsr FPSCR, %0" : : "r" (old);
                     }
+                }
+            }
+            else version (RISCV_Any)
+            {
+                uint newValues = 0x0;
+                asm pure nothrow @nogc
+                {
+                    "fsflags %0" : : "r" (newValues);
                 }
             }
             else
@@ -4984,6 +5004,10 @@ version (X86_Any)
     version = IeeeFlagsSupport;
 }
 else version (PPC_Any)
+{
+    version = IeeeFlagsSupport;
+}
+else version (RISCV_Any)
 {
     version = IeeeFlagsSupport;
 }
@@ -5226,6 +5250,21 @@ struct FloatingPointControl
                                  | inexactException,
         }
     }
+    else version (RISCV_Any)
+    {
+        enum : ExceptionMask
+        {
+            inexactException      = 0x01,
+            divByZeroException    = 0x02,
+            underflowException    = 0x04,
+            overflowException     = 0x08,
+            invalidException      = 0x10,
+            severeExceptions   = overflowException | divByZeroException
+                                 | invalidException,
+            allExceptions      = severeExceptions | underflowException
+                                 | inexactException,
+        }
+    }
     else version (X86_Any)
     {
         enum : ExceptionMask
@@ -5338,6 +5377,10 @@ private:
     {
         alias ControlState = uint;
     }
+    else version (RISCV_Any)
+    {
+        alias ControlState = uint;
+    }
     else version (X86_Any)
     {
         alias ControlState = ushort;
@@ -5394,6 +5437,15 @@ private:
                     {
                         "vmrs %0, FPSCR" : "=r" cont;
                     }
+                }
+                return cont;
+            }
+            else version (RISCV_Any)
+            {
+                ControlState cont;
+                asm pure nothrow @nogc
+                {
+                    "frcsr %0" : "=r" (cont);
                 }
                 return cont;
             }
@@ -5480,6 +5532,13 @@ private:
                     {
                         "vmsr FPSCR, %0" : : "r" (newState);
                     }
+                }
+            }
+            else version (RISCV_Any)
+            {
+                asm pure nothrow @nogc
+                {
+                    "fscsr %0" : : "r" (newState);
                 }
             }
             else

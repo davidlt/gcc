@@ -32,6 +32,8 @@ case "${target}" in
 	;;
   x86_64-*-netbsd* | i?86-*-netbsd*)
 	;;
+  riscv*-*-linux*)
+	;;
   *)
 	UNSUPPORTED=1
 	;;
